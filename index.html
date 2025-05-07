@@ -1,0 +1,620 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Channel Finder</title>
+    <style>
+        body {
+            font-family: 'Arial', sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f0f2f5;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-height: 100vh;
+            color: #333;
+        }
+        header {
+            background-color: #00509e;
+            color: white;
+            padding: 20px 0;
+            text-align: center;
+            width: 100%;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        header h1 {
+            margin: 0;
+            font-size: 2em;
+        }
+        .container {
+            background-color: white;
+            padding: 30px;
+            border-radius: 8px;
+            box-shadow: 0 0 15px rgba(0,0,0,0.1);
+            margin-top: 30px;
+            width: 90%;
+            max-width: 600px;
+            text-align: center;
+        }
+        .provider-selector {
+            margin-bottom: 20px;
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+        }
+        .provider-btn {
+            background-color: #e9ecef;
+            border: 2px solid #ddd;
+            border-radius: 4px;
+            padding: 10px 15px;
+            cursor: pointer;
+            font-size: 1em;
+            transition: all 0.3s ease;
+        }
+        .provider-btn.active {
+            background-color: #00509e;
+            color: white;
+            border-color: #00509e;
+        }
+        .provider-btn:hover:not(.active) {
+            background-color: #ddd;
+        }
+        label {
+            display: block;
+            margin-bottom: 10px;
+            font-size: 1.2em;
+            color: #555;
+        }
+        input[type="text"] {
+            width: calc(100% - 22px);
+            padding: 12px;
+            margin-bottom: 20px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 1em;
+            box-sizing: border-box;
+        }
+        button {
+            background-color: #007bff;
+            color: white;
+            padding: 12px 25px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 1em;
+            transition: background-color 0.3s ease;
+        }
+        button:hover {
+            background-color: #0056b3;
+        }
+        #result {
+            margin-top: 25px;
+            font-size: 1.1em;
+            padding: 15px;
+            background-color: #e9ecef;
+            border-radius: 4px;
+            min-height: 50px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            text-align: left;
+            line-height: 1.6;
+        }
+        .channel-info {
+            font-weight: bold;
+            color: #00509e;
+        }
+        .pdf-section {
+            margin-top: 20px;
+            display: flex;
+            justify-content: center;
+        }
+        .pdf-link {
+            background-color: #f8f9fa;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            padding: 10px 15px;
+            margin: 0 10px;
+            color: #00509e;
+            text-decoration: none;
+            font-weight: bold;
+            transition: background-color 0.3s ease;
+        }
+        .pdf-link:hover {
+            background-color: #e9ecef;
+        }
+        footer {
+            margin-top: auto;
+            padding: 20px 0;
+            text-align: center;
+            font-size: 0.9em;
+            color: #777;
+            width: 100%;
+            background-color: #e9ecef;
+        }
+        #provider-info {
+            margin-top: 15px;
+            font-style: italic;
+            color: #777;
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <h1>Channel Finder</h1>
+    </header>
+
+    <div class="container">
+        <div class="provider-selector">
+            <button class="provider-btn active" data-provider="directv">DIRECTV</button>
+            <button class="provider-btn" data-provider="uverse">AT&T U-verse</button>
+            <button class="provider-btn" data-provider="dish">DISH Network</button>
+        </div>
+        
+        <div id="provider-info">
+            Currently showing DIRECTV channel lineup
+        </div>
+
+        <label for="channelName">Enter Channel Name:</label>
+        <input type="text" id="channelName" placeholder="e.g., ESPN, CNN, HBO">
+        <button onclick="searchChannel()">Search</button>
+        
+        <div id="result">
+            <p>Enter a channel name above and click search.</p>
+        </div>
+        
+        <div class="pdf-section">
+            <a href="#" class="pdf-link" id="pdfLink" target="_blank">View Complete Channel Lineup (PDF)</a>
+        </div>
+    </div>
+
+    <footer>
+        <p>Channel data sourced from provider channel lineups. For the most current information, please refer to the official provider websites.</p>
+    </footer>
+
+    <script>
+    // DIRECTV Channel Data
+const directvChannelData = [
+    { name: "A&E", number: "265" },
+    { name: "ACC Network", number: "612" },
+    { name: "AMC", number: "254" },
+    { name: "Animal Planet", number: "282" },
+    { name: "AXS TV", number: "340" },
+    { name: "BBC America", number: "264" },
+    { name: "BBC News", number: "346" },
+    { name: "BET", number: "329" },
+    { name: "Big Ten Network", number: "610" },
+    { name: "Bloomberg TV", number: "353" },
+    { name: "Boomerang", number: "298" },
+    { name: "Bravo", number: "237" },
+    { name: "Cartoon Network", number: "296" },
+    { name: "CBS Sports Network", number: "221" },
+    { name: "Cheddar News", number: "354" },
+    { name: "Cinemax", number: "515" },
+    { name: "CMT", number: "327" },
+    { name: "CNBC", number: "355" },
+    { name: "CNN", number: "202" },
+    { name: "Comedy Central", number: "249" },
+    { name: "Cooking Channel", number: "232" },
+    { name: "C-SPAN", number: "350" },
+    { name: "C-SPAN2", number: "351" },
+    { name: "Destination America", number: "286" },
+    { name: "Discovery", number: "278" },
+    { name: "Discovery Family", number: "294" },
+    { name: "Disney Channel", number: "290" },
+    { name: "Disney Junior", number: "289" },
+    { name: "Disney XD", number: "292" },
+    { name: "E!", number: "236" },
+    { name: "ESPN", number: "206" },
+    { name: "ESPN2", number: "209" },
+    { name: "ESPNEWS", number: "207" },
+    { name: "ESPNU", number: "208" },
+    { name: "Food Network", number: "231" },
+    { name: "FOX Business Network", number: "359" },
+    { name: "FOX News Channel", number: "360" },
+    { name: "FOX Sports 1", number: "219" },
+    { name: "FOX Sports 2", number: "618" },
+    { name: "FOX Weather", number: "363" },
+    { name: "Freeform", number: "311" },
+    { name: "FX", number: "248" },
+    { name: "FXM", number: "258" },
+    { name: "FXX", number: "259" },
+    { name: "FYI", number: "266" },
+    { name: "Galavisión", number: "404" },
+    { name: "Game Show Network", number: "233" },
+    { name: "Golf Channel", number: "218" },
+    { name: "Great American Family", number: "326" },
+    { name: "Hallmark Channel", number: "312" },
+    { name: "Hallmark Mystery", number: "565" },
+    { name: "HBO", number: "501" },
+    { name: "HBO 2", number: "502" },
+    { name: "HBO Comedy", number: "506" },
+    { name: "HBO Family", number: "507" },
+    { name: "HBO Latino", number: "511" },
+    { name: "HBO Signature", number: "503" },
+    { name: "HBO Zone", number: "509" },
+    { name: "HGTV", number: "229" },
+    { name: "History", number: "269" },
+    { name: "HLN", number: "204" },
+    { name: "IFC", number: "333" },
+    { name: "Investigation Discovery", number: "285" },
+    { name: "ION", number: "305" },
+    { name: "Lifetime", number: "252" },
+    { name: "LMN", number: "253" },
+    { name: "Logo", number: "272" },
+    { name: "Magnolia Network", number: "230" },
+    { name: "MLB Network", number: "213" },
+    { name: "MoreMAX", number: "517" },
+    { name: "MotorTrend", number: "281" },
+    { name: "MSNBC", number: "356" },
+    { name: "MTV", number: "331" },
+    { name: "MTV2", number: "332" },
+    { name: "MTV Classic", number: "336" },
+    { name: "National Geographic", number: "276" },
+    { name: "Nat Geo WILD", number: "283" },
+    { name: "NBA TV", number: "216" },
+    { name: "Newsmax", number: "349" },
+    { name: "NFL Network", number: "212" },
+    { name: "NHL Network", number: "215" },
+    { name: "Nick Jr.", number: "301" },
+    { name: "Nickelodeon", number: "299" },
+    { name: "Nicktoons", number: "302" },
+    { name: "OWN", number: "279" },
+    { name: "Oxygen", number: "251" },
+    { name: "Paramount Network", number: "241" },
+    { name: "Paramount+ with SHOWTIME", number: "545" },
+    { name: "SEC Network", number: "611" },
+    { name: "Smithsonian Channel", number: "570" },
+    { name: "Starz", number: "525" },
+    { name: "Sundance TV", number: "239" },
+    { name: "Syfy", number: "244" },
+    { name: "TBS", number: "247" },
+    { name: "TCM", number: "256" },
+    { name: "Tennis Channel", number: "217" },
+    { name: "The Weather Channel", number: "362" },
+    { name: "TLC", number: "280" },
+    { name: "TNT", number: "245" },
+    { name: "Travel Channel", number: "277" },
+    { name: "truTV", number: "246" },
+    { name: "TV Land", number: "304" },
+    { name: "USA Network", number: "242" },
+    { name: "VH1", number: "335" },
+    { name: "VICE", number: "271" }
+];
+
+// ATT Channel Data
+const attChannelData = [
+    { name: "A&E", number: "132/1132 HD" },
+    { name: "ACC Network", number: "610/1610 HD" },
+    { name: "AMC", number: "119/1119 HD" },
+    { name: "Animal Planet", number: "252/1252 HD" },
+    { name: "AXS TV", number: "1106 HD" },
+    { name: "BBC America", number: "122/1122 HD" },
+    { name: "BBC News", number: "207/1207 HD" },
+    { name: "BET", number: "155/1155 HD" },
+    { name: "Big Ten Network", number: "650/1650 HD" },
+    { name: "Bloomberg TV", number: "222/1222 HD" },
+    { name: "Boomerang", number: "327" },
+    { name: "Bravo", number: "120/1120 HD" },
+    { name: "Cartoon Network", number: "325/1325 HD" },
+    { name: "CBS Sports Network", number: "643/1643 HD" },
+    { name: "Cheddar News", number: "1219 HD" },
+    { name: "Cinemax", number: "832/1832 HD" },
+    { name: "CMT", number: "525/1525 HD" },
+    { name: "CNBC", number: "216/1216 HD" },
+    { name: "CNN", number: "202/1202 HD" },
+    { name: "Comedy Central", number: "140/1140 HD" },
+    { name: "Cooking Channel", number: "456/1456 HD" },
+    { name: "C-SPAN", number: "230" },
+    { name: "C-SPAN2", number: "231" },
+    { name: "Destination America", number: "381/1381 HD" },
+    { name: "Discovery", number: "120/1120 HD" },
+    { name: "Discovery Family", number: "335/1335 HD" },
+    { name: "Disney Channel", number: "302/1302 HD" },
+    { name: "Disney Junior", number: "306/1306 HD" },
+    { name: "Disney XD", number: "304/1304 HD" },
+    { name: "E!", number: "134/1134 HD" },
+    { name: "ESPN", number: "602/1602 HD" },
+    { name: "ESPN2", number: "606/1606 HD" },
+    { name: "ESPNEWS", number: "604/1604 HD" },
+    { name: "ESPNU", number: "605/1605 HD" },
+    { name: "Food Network", number: "452/1452 HD" },
+    { name: "FOX Business Network", number: "211/1211 HD" },
+    { name: "FOX News Channel", number: "210/1210 HD" },
+    { name: "FOX Sports 1", number: "652/1652 HD" },
+    { name: "FOX Sports 2", number: "651/1651 HD" },
+    { name: "FOX Weather", number: "230/1230 HD" },
+    { name: "Freeform", number: "178/1178 HD" },
+    { name: "FX", number: "129/1129 HD" },
+    { name: "FXM", number: "792/1792 HD" },
+    { name: "FXX", number: "128/1128 HD" },
+    { name: "FYI", number: "272/1272 HD" },
+    { name: "Galavisión", number: "3003/3303 HD" },
+    { name: "Game Show Network", number: "173/1173 HD" },
+    { name: "Golf Channel", number: "641/1641 HD" },
+    { name: "Great American Family", number: "189/1189 HD" },
+    { name: "Hallmark Channel", number: "365/1365 HD" },
+    { name: "Hallmark Mystery", number: "366/1366 HD" },
+    { name: "HBO", number: "802/1802 HD" },
+    { name: "HBO 2", number: "804/1804 HD" },
+    { name: "HBO Comedy", number: "810/1810 HD" },
+    { name: "HBO Family", number: "806/1806 HD" },
+    { name: "HBO Latino", number: "814/1814 HD" },
+    { name: "HBO Signature", number: "808/1808 HD" },
+    { name: "HBO Zone", number: "812/1812 HD" },
+    { name: "HGTV", number: "450/1450 HD" },
+    { name: "History", number: "256/1256 HD" },
+    { name: "HLN", number: "203/1203 HD" },
+    { name: "IFC", number: "797/1797 HD" },
+    { name: "Investigation Discovery", number: "260/1260 HD" },
+    { name: "ION", number: "194/1194 HD" },
+    { name: "Lifetime", number: "360/1360 HD" },
+    { name: "LMN", number: "362/1362 HD" },
+    { name: "Logo", number: "517/1517 HD" },
+    { name: "Magnolia Network", number: "454/1454 HD" },
+    { name: "MLB Network", number: "634/1634 HD" },
+    { name: "MoreMAX", number: "834/1834 HD" },
+    { name: "MotorTrend", number: "1104" },
+    { name: "MSNBC", number: "215/1215 HD" },
+    { name: "MTV", number: "502/1502 HD" },
+    { name: "MTV2", number: "505/1505 HD" },
+    { name: "MTV Classic", number: "520/521(West)" },
+    { name: "National Geographic", number: "265/1265 HD" },
+    { name: "Nat Geo WILD", number: "266" },
+    { name: "NBA TV", number: "632/1632 HD" },
+    { name: "Newsmax", number: "1209" },
+    { name: "NFL Network", number: "630/1630 HD" },
+    { name: "NHL Network", number: "638/1638 HD" },
+    { name: "Nick Jr.", number: "320" },
+    { name: "Nickelodeon", number: "314/1314 HD" },
+    { name: "Nicktoons", number: "318/1318 HD" },
+    { name: "OWN", number: "170/1170 HD" },
+    { name: "Oxygen", number: "368/1368 HD" },
+    { name: "Paramount Network", number: "145/1145 HD" },
+    { name: "Paramount+ with SHOWTIME", number: "852/1852 HD" },
+    { name: "SEC Network", number: "607/1607 HD" },
+    { name: "Smithsonian Channel", number: "118/1118 HD" },
+    { name: "Starz", number: "902/1902 HD" },
+    { name: "Sundance TV", number: "798/1798 HD" },
+    { name: "Syfy", number: "151/1151 HD" },
+    { name: "TBS", number: "112/1112 HD" },
+    { name: "TCM", number: "790/1790 HD" },
+    { name: "Tennis Channel", number: "660/1660 HD" },
+    { name: "The Weather Channel", number: "225/1225 HD" },
+    { name: "TLC", number: "250/1250 HD" },
+    { name: "TNT", number: "108/1108 HD" },
+    { name: "Travel Channel", number: "254/1254 HD" },
+    { name: "truTV", number: "164/1164 HD" },
+    { name: "TV Land", number: "138/1138 HD" },
+    { name: "USA Network", number: "124/1124 HD" },
+    { name: "VH1", number: "518/1518 HD" },
+    { name: "VICE", number: "257/1257 HD" }
+];
+
+// DISH Channel Data
+const dishChannelData = [
+    { name: "A&E", number: "118" },
+    { name: "ACC Network", number: "402" },
+    { name: "AMC", number: "131" },
+    { name: "Animal Planet", number: "184" },
+    { name: "AXS TV", number: "167" },
+    { name: "BBC America", number: "135" },
+    { name: "BBC News", number: "281" },
+    { name: "BET", number: "124" },
+    { name: "Big Ten Network", number: "405" },
+    { name: "Bloomberg TV", number: "203" },
+    { name: "Boomerang", number: "175" },
+    { name: "Bravo", number: "129" },
+    { name: "Cartoon Network", number: "176" },
+    { name: "CBS Sports Network", number: "158" },
+    { name: "Cheddar News", number: "217" },
+    { name: "Cinemax", number: "307" },
+    { name: "CMT", number: "166" },
+    { name: "CNBC", number: "208" },
+    { name: "CNN", number: "200" },
+    { name: "Comedy Central", number: "107" },
+    { name: "Cooking Channel", number: "113" },
+    { name: "C-SPAN", number: "210" },
+    { name: "C-SPAN2", number: "211" },
+    { name: "Destination America", number: "194" },
+    { name: "Discovery", number: "182" },
+    { name: "Discovery Family", number: "179" },
+    { name: "Disney Channel", number: "172" },
+    { name: "Disney Junior", number: "168" },
+    { name: "Disney XD", number: "174" },
+    { name: "E!", number: "114" },
+    { name: "ESPN", number: "140" },
+    { name: "ESPN2", number: "143" },
+    { name: "ESPNEWS", number: "142" },
+    { name: "ESPNU", number: "141" },
+    { name: "Food Network", number: "110" },
+    { name: "FOX Business Network", number: "206" },
+    { name: "FOX News Channel", number: "205" },
+    { name: "FOX Sports 1", number: "150" },
+    { name: "FOX Sports 2", number: "149" },
+    { name: "FOX Weather", number: "222" },
+    { name: "Freeform", number: "180" },
+    { name: "FX", number: "136" },
+    { name: "FXM", number: "384" },
+    { name: "FXX", number: "125" },
+    { name: "FYI", number: "119" },
+    { name: "Galavisión", number: "273" },
+    { name: "Game Show Network", number: "116" },
+    { name: "Golf Channel", number: "401" },
+    { name: "Great American Family", number: "165" },
+    { name: "Hallmark Channel", number: "185" },
+    { name: "Hallmark Mystery", number: "187" },
+    { name: "HBO", number: "310" },
+    { name: "HBO 2", number: "312" },
+    { name: "HBO Comedy", number: "317" },
+    { name: "HBO Family", number: "315" },
+    { name: "HBO Latino", number: "313" },
+    { name: "HBO Signature", number: "314" },
+    { name: "HBO Zone", number: "316" },
+    { name: "HGTV", number: "112" },
+    { name: "History", number: "120" },
+    { name: "HLN", number: "202" },
+    { name: "IFC", number: "133" },
+    { name: "Investigation Discovery", number: "192" },
+    { name: "ION", number: "250" },
+    { name: "Lifetime", number: "108" },
+    { name: "LMN", number: "109" },
+    { name: "Logo", number: "254" },
+    { name: "Magnolia Network", number: "111" },
+    { name: "MLB Network", number: "152" },
+    { name: "MoreMAX", number: "309" },
+    { name: "MotorTrend", number: "246" },
+    { name: "MSNBC", number: "209" },
+    { name: "MTV", number: "160" },
+    { name: "MTV2", number: "161" },
+    { name: "MTV Classic", number: "163" },
+    { name: "National Geographic", number: "197" },
+    { name: "Nat Geo WILD", number: "190" },
+    { name: "NBA TV", number: "156" },
+    { name: "Newsmax", number: "216" },
+    { name: "NFL Network", number: "154" },
+    { name: "NHL Network", number: "157" },
+    { name: "Nick Jr.", number: "169" },
+    { name: "Nickelodeon", number: "170" },
+    { name: "Nicktoons", number: "178" },
+    { name: "OWN", number: "189" },
+    { name: "Oxygen", number: "127" },
+    { name: "Paramount Network", number: "241" },
+    { name: "Paramount+ with SHOWTIME", number: "318" },
+    { name: "SEC Network", number: "404" },
+    { name: "Smithsonian Channel", number: "367" },
+    { name: "Starz", number: "350" },
+    { name: "Sundance TV", number: "126" },
+    { name: "Syfy", number: "122" },
+    { name: "TBS", number: "139" },
+    { name: "TCM", number: "132" },
+    { name: "Tennis Channel", number: "400" },
+    { name: "The Weather Channel", number: "214" },
+    { name: "TLC", number: "183" },
+    { name: "TNT", number: "138" },
+    { name: "Travel Channel", number: "196" },
+    { name: "truTV", number: "242" },
+    { name: "TV Land", number: "106" },
+    { name: "USA Network", number: "105" },
+    { name: "VH1", number: "162" },
+    { name: "VICE", number: "121" }
+];
+
+       // Initialize current provider
+let currentProvider = 'directv';
+let currentChannelData = directvChannelData;
+const pdfLinks = {
+    'directv': 'https://www.directv.com/channel-lineup/',
+    'uverse': 'https://www.att.com/support/article/u-verse-tv/KM1009502/',
+    'dish': 'https://www.dish.com/channel-lineup/'
+};
+
+// Set up provider selector buttons
+const providerBtns = document.querySelectorAll('.provider-btn');
+providerBtns.forEach(btn => {
+    btn.addEventListener('click', function() {
+        // Remove active class from all buttons
+        providerBtns.forEach(b => b.classList.remove('active'));
+        // Add active class to clicked button
+        this.classList.add('active');
+        
+        // Update current provider and channel data
+        currentProvider = this.getAttribute('data-provider');
+        
+        switch(currentProvider) {
+            case 'directv':
+                currentChannelData = directvChannelData;
+                document.getElementById('provider-info').innerText = 'Currently showing DIRECTV channel lineup';
+                break;
+            case 'uverse':
+                currentChannelData = attChannelData;
+                document.getElementById('provider-info').innerText = 'Currently showing AT&T U-verse channel lineup';
+                break;
+            case 'dish':
+                currentChannelData = dishChannelData;
+                document.getElementById('provider-info').innerText = 'Currently showing DISH Network channel lineup';
+                break;
+        }
+        
+        // Update PDF link
+        document.getElementById('pdfLink').href = pdfLinks[currentProvider];
+        
+        // Clear search results
+        document.getElementById('result').innerHTML = '<p>Enter a channel name above and click search.</p>';
+        
+        // Clear search input
+        document.getElementById('channelName').value = '';
+    });
+});
+
+        // Add event listener for 'Enter' key on the input field
+document.getElementById('channelName').addEventListener('keypress', function(event) {
+    if (event.key === 'Enter') {
+        event.preventDefault(); // Prevent form submission if it were inside a form
+        searchChannel();
+    }
+});
+
+// Initialize PDF link
+document.getElementById('pdfLink').href = pdfLinks[currentProvider];
+
+function searchChannel() {
+    const searchInput = document.getElementById('channelName').value.trim().toLowerCase();
+    const resultDiv = document.getElementById('result');
+    resultDiv.innerHTML = ''; // Clear previous results
+
+    if (!searchInput) {
+        resultDiv.innerHTML = '<p>Please enter a channel name to search.</p>';
+        return;
+    }
+
+    const foundChannels = currentChannelData.filter(channel =>
+        channel.name.toLowerCase().includes(searchInput)
+    );
+
+    if (foundChannels.length > 0) {
+        let resultsHTML = '<p>Found channel(s):</p><ul>';
+        foundChannels.forEach(channel => {
+            resultsHTML += `<li><span class="channel-info">${channel.name}:</span> Channel ${channel.number}</li>`;
+        });
+        resultsHTML += '</ul>';
+        resultDiv.innerHTML = resultsHTML;
+    } else {
+        resultDiv.innerHTML = `<p>No channel found matching "<span class="channel-info">${document.getElementById('channelName').value.trim()}</span>" on ${getProviderName()}. Please check the spelling or try a different name.</p>`;
+    }
+}
+
+function getProviderName() {
+    switch(currentProvider) {
+        case 'directv':
+            return 'DIRECTV';
+        case 'uverse':
+            return 'AT&T U-verse';
+        case 'dish':
+            return 'DISH Network';
+        default:
+            return 'the selected provider';
+    }
+}
+
+// Fixed provider selection code in the provider button click handler
+switch(currentProvider) {
+    case 'directv':
+        currentChannelData = directvChannelData;
+        document.getElementById('provider-info').innerText = 'Currently showing DIRECTV channel lineup';
+        break;
+    case 'uverse':
+        currentChannelData = attChannelData; // Using the correct variable name
+        document.getElementById('provider-info').innerText = 'Currently showing AT&T U-verse channel lineup';
+        break;
+    case 'dish':
+        currentChannelData = dishChannelData;
+        document.getElementById('provider-info').innerText = 'Currently showing DISH Network channel lineup';
+        break;
+}
+    </script>
+
+</body>
+</html>
